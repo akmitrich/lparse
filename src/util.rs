@@ -1,5 +1,5 @@
 use crate::{
-    combinators::{filter, left, one_or_more, right, zero_or_more},
+    combinators::{filter, left, map, one_or_more, right, zero_or_more},
     parse::{Parse, ParseResult},
 };
 
@@ -49,7 +49,7 @@ pub fn quoted_string<'a>() -> impl Parse<'a, String> {
         right(
             match_literal("\""),
             left(
-                zero_or_more(pred(any_char, |c| *c != '"')),
+                zero_or_more(filter(any_char, |c| *c != '"')),
                 match_literal("\""),
             ),
         ),
@@ -139,7 +139,7 @@ mod test_xml {
 
     #[test]
     fn predicate_combinator() {
-        let parser = pred(any_char, |ch| *ch == 'o');
+        let parser = filter(any_char, |ch| *ch == 'o');
         assert_eq!(Ok(("mg", 'o')), parser.parse("omg"));
         assert_eq!(Err("lol"), parser.parse("lol"));
     }
