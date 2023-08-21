@@ -1,10 +1,39 @@
-use crate::parse::{Parse, ParseResult};
+use crate::{
+    combinators::{filter, left, one_or_more, right, zero_or_more},
+    parse::{Parse, ParseResult},
+};
 
 pub fn match_literal<'a>(expected: &'static str) -> impl Parse<'a, ()> {
     move |input: &'a str| match input.get(0..expected.len()) {
         Some(prefix) if prefix == expected => Ok((&input[expected.len()..], ())),
         _ => Err(input),
     }
+}
+
+pub fn any_char(input: &str) -> ParseResult<char> {
+    match input.chars().next() {
+        Some(ch) => Ok((&input[ch.len_utf8()..], ch)),
+        _ => Err(input),
+    }
+}
+
+pub fn whitespace_char<'a>() -> impl Parse<'a, char> {
+    filter(any_char, |c| c.is_whitespace())
+}
+
+pub fn space_some<'a>() -> impl Parse<'a, Vec<char>> {
+    one_or_more(whitespace_char())
+}
+
+pub fn space_any<'a>() -> impl Parse<'a, Vec<char>> {
+    zero_or_more(whitespace_char())
+}
+
+pub fn whitespace_wrap<'a, P, A>(parser: P) -> impl Parse<'a, A>
+where
+    P: Parse<'a, A>,
+{
+    right(space_any(), left(parser, space_any()))
 }
 
 struct PrefixParser<'a>(pub &'a str);
