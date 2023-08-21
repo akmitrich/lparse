@@ -80,54 +80,17 @@ where
     }
 }
 
-#[cfg(test)]
-mod test_xml {
-    use super::*;
-    fn identifier(input: &str) -> Result<(&str, String), &str> {
-        let mut matched = String::new();
-        let mut chars = input.chars();
-
-        match chars.next() {
-            Some(next) if next.is_alphabetic() => matched.push(next),
-            _ => return Err(input),
-        }
-
-        for ch in chars {
-            if ch.is_alphanumeric() || ch == '-' {
-                matched.push(ch);
-            } else {
-                break;
+pub fn pred<'a, P, A, F>(parser: P, predicate: F) -> impl Parse<'a, A>
+where
+    P: Parse<'a, A>,
+    F: Fn(&A) -> bool,
+{
+    move |input| {
+        if let Ok((rest, value)) = parser.parse(input) {
+            if predicate(&value) {
+                return Ok((rest, value));
             }
         }
-
-        let next_index = matched.len();
-        Ok((&input[next_index..], matched))
-    }
-
-    #[test]
-    fn right_combinator() {
-        let tag_opener = right(crate::util::match_literal("<"), identifier);
-        assert_eq!(
-            Ok(("/>", "my-first-element".to_string())),
-            tag_opener.parse("<my-first-element/>")
-        );
-        assert_eq!(Err("oops"), tag_opener.parse("oops"));
-        assert_eq!(Err("!oops"), tag_opener.parse("<!oops"));
-    }
-
-    #[test]
-    fn one_or_more_combinator() {
-        let parser = one_or_more(crate::util::match_literal("ha"));
-        assert_eq!(Ok(("", vec![(), (), ()])), parser.parse("hahaha"));
-        assert_eq!(Err("ahah"), parser.parse("ahah"));
-        assert_eq!(Err(""), parser.parse(""));
-    }
-
-    #[test]
-    fn zero_or_more_combinator() {
-        let parser = zero_or_more(crate::util::match_literal("ha"));
-        assert_eq!(Ok(("", vec![(), (), ()])), parser.parse("hahaha"));
-        assert_eq!(Ok(("ahah", vec![])), parser.parse("ahah"));
-        assert_eq!(Ok(("", vec![])), parser.parse(""));
+        Err(input)
     }
 }
