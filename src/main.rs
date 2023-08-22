@@ -2,12 +2,12 @@ use crate::parse::Parse;
 
 pub mod combinators;
 pub mod parse;
-pub mod re;
+pub mod re_compile;
 pub mod util;
 pub mod xml;
 
 fn main() {
-    println!("Parsed: {:?}", re::range_quantifier().parse("{75}"));
+    println!("Parsed: {:?}", re_compile::range_quantifier().parse("{75}"));
 }
 
 fn _xml_example() {
