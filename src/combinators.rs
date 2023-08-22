@@ -151,6 +151,18 @@ where
     }
 }
 
+pub fn optional<'a, T, P>(parser: P) -> impl Parse<'a, Option<T>>
+where
+    P: Parse<'a, T>,
+{
+    move |input| {
+        parser
+            .parse(input)
+            .map(|(rest, result)| (rest, Some(result)))
+            .or_else(|input| Ok((input, None)))
+    }
+}
+
 #[cfg(test)]
 mod test_xml {
     use super::*;
